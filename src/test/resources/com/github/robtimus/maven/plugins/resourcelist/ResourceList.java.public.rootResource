@@ -1,0 +1,57 @@
+package com.github.robtimus.maven.plugins.resourcelist;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Generated;
+
+@Generated("resource-list-maven-plugin")
+public final class ResourceList {
+
+    private static final String RESOURCE_LIST_RESOURCE = "/test.resources";
+
+    private ResourceList() {
+    }
+
+    public static Stream<String> stream() {
+        BufferedReader reader = reader();
+        return reader.lines().onClose(() -> {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    public static List<String> list() {
+        try (BufferedReader reader = reader()) {
+            return reader.lines().collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void forEach(Consumer<? super String> action) {
+        Objects.requireNonNull(action);
+        try (BufferedReader reader = reader()) {
+            reader.lines().forEach(action);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static BufferedReader reader() {
+        InputStream inputStream = ResourceList.class.getResourceAsStream(RESOURCE_LIST_RESOURCE);
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        return new BufferedReader(inputStreamReader);
+    }
+}

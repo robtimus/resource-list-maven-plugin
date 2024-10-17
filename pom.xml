@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2024 Rob Spoor
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.github.robtimus</groupId>
+    <artifactId>robtimus-parent</artifactId>
+    <version>1.13</version>
+    <relativePath />
+  </parent>
+
+  <artifactId>resource-list-maven-plugin</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>maven-plugin</packaging>
+
+  <name>resource-list-maven-plugin</name>
+  <description>A Maven plugin that can create lists of resources</description>
+  <url>https://robtimus.github.io/resource-list-maven-plugin/</url>
+  <inceptionYear>2024</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Rob Spoor</name>
+      <email>robtimus@users.noreply.github.com</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git@github.com:robtimus/resource-list-maven-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:robtimus/resource-list-maven-plugin.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/robtimus/resource-list-maven-plugin</url>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/robtimus/resource-list-maven-plugin/issues</url>
+  </issueManagement>
+
+  <properties>
+    <version.java>11</version.java>
+
+    <version.junit-support>3.0</version.junit-support>
+    <version.maven>3.8.2</version.maven>
+    <version.maven-annotations>3.8.1</version.maven-annotations>
+    <version.memory-fs>2.1</version.memory-fs>
+    <version.pioneer>2.3.0</version.pioneer>
+    <version.plexus-utils>3.2.1</version.plexus-utils>
+
+    <version.plugin.maven>3.8.1</version.plugin.maven>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>${version.maven}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${version.maven}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${version.maven-annotations}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+      <version>${version.plexus-utils}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit-pioneer</groupId>
+      <artifactId>junit-pioneer</artifactId>
+      <version>${version.pioneer}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.robtimus</groupId>
+      <artifactId>memory-fs</artifactId>
+      <version>${version.memory-fs}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.robtimus</groupId>
+      <artifactId>junit-support</artifactId>
+      <version>${version.junit-support}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <sourcepath>${project.basedir}/src/main/java</sourcepath>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>${version.plugin.maven}</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>helpmojo</goal>
+            </goals>
+            <configuration>
+              <helpPackageName>com.github.robtimus.maven.plugins.resourcelist</helpPackageName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.github.robtimus</groupId>
+        <artifactId>i18n-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-messages</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <bundleName>com.github.robtimus.maven.plugins.resourcelist.resource-list-maven-plugin</bundleName>
+              <className>com.github.robtimus.maven.plugins.resourcelist.Messages</className>
+              <licenseText>Apache-2.0</licenseText>
+              <licenseCopyrightHolder>Rob Spoor</licenseCopyrightHolder>
+              <licenseCopyrightYear>2024</licenseCopyrightYear>
+              <publicVisibility>false</publicVisibility>
+              <suppressWarnings>nls</suppressWarnings>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.github.robtimus</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-report-plugin</artifactId>
+        <version>${version.plugin.maven}</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <profiles>
+    <profile>
+      <id>maven-3.9</id>
+
+      <properties>
+        <version.maven>3.9.0</version.maven>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>maven-4</id>
+
+      <properties>
+        <version.maven>4.0.0-alpha-4</version.maven>
+      </properties>
+    </profile>
+  </profiles>
+</project>

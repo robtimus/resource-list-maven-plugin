@@ -1,0 +1,17 @@
+<lifecycleMappingMetadata>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>list-resources</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <execute>
+          <runOnConfiguration>false</runOnConfiguration>
+          <runOnIncremental>false</runOnIncremental>
+        </execute>
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
+</lifecycleMappingMetadata>
