@@ -17,9 +17,9 @@
 
 package com.github.robtimus.maven.plugins.resourcelist;
 
-import java.io.File;
 import java.nio.file.Path;
-import org.apache.maven.plugins.annotations.Parameter;
+import java.nio.file.Paths;
+import org.apache.maven.project.MavenProject;
 
 /**
  * A class describing a class used to access resource lists.
@@ -30,31 +30,26 @@ public class ResourceListClass {
 
     /**
      * The fully qualified class name.
-     *
-     * @since 1.0
      */
-    @Parameter(required = true)
     String className;
 
     /**
-     * If {@code true}, classes and methods will have public visibility; otherwise they will be package private.
-     *
-     * @since 1.0
+     * {@code true} if classes and methods should have public visibility, or {@code false} if they should be package private.
      */
-    @Parameter(defaultValue = "false")
-    boolean publicVisibility;
-
-    Path outputDirectory;
+    boolean publicVisibility = false;
 
     /**
      * The output directory where the resource list accessor class will be written to, without the package structure.
-     * This directory will be added as a project source root if needed.
-     *
-     * @param outputDirectory The output directory where the resource list accessor class will be written to
-     * @since 1.0
      */
-    @Parameter(defaultValue = "${project.build.directory}/generated-sources/resource-lists", required = true)
-    public void setOutputDirectory(File outputDirectory) {
-        this.outputDirectory = outputDirectory.toPath().toAbsolutePath().normalize();
+    Path outputDirectory;
+
+    void setDefaultOutputDirectory(MavenProject project) {
+        outputDirectory = Paths.get(project.getBuild().getOutputDirectory()).resolve("generated-sources/resource-lists"); //$NON-NLS-1$
+    }
+
+    @Override
+    @SuppressWarnings("nls")
+    public String toString() {
+        return String.format("className: %s, publicVisibility: %b, outputDirectory: %s", className, publicVisibility, outputDirectory);
     }
 }

@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -42,6 +43,9 @@ import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import com.github.robtimus.filesystems.memory.MemoryFileAttributeView;
 import com.github.robtimus.filesystems.memory.MemoryFileSystemProvider;
@@ -200,42 +204,92 @@ class ListResourcesMojoTest {
         @Nested
         class WithResourceListClass {
 
-            @Test
-            void testResourceListFileIsResource() throws MojoExecutionException, MojoFailureException, IOException {
-                MavenProject project = mock(MavenProject.class);
+            @Nested
+            class ResourceListFileIsResource {
 
-                ListResourcesMojo mojo = new ListResourcesMojo();
-                mojo.project = project;
-                mojo.includes = new String[] { "**/*.properties" };
-                mojo.setLog(mock(Log.class));
+                @ParameterizedTest
+                @ValueSource(booleans = { false, true })
+                void testSourceRootNotAddedYet(boolean providedAsAbsolute) throws MojoExecutionException, MojoFailureException, IOException {
+                    MavenProject project = mock(MavenProject.class);
 
-                mojo.resourceListFile = Paths.get(URI.create("memory:/project/target/classes/resources"));
-                mojo.resourceBaseDir = Paths.get("src/main/resources");
-                Path buildOutputDir = Paths.get(URI.create("memory:/project/target/classes"));
+                    Path outputDirectory = Paths.get(URI.create("memory:generated"));
+                    if (providedAsAbsolute) {
+                        outputDirectory = outputDirectory.toAbsolutePath();
+                    }
 
-                mojo.resourceListClass = new ResourceListClass();
-                mojo.resourceListClass.className = "com.github.robtimus.maven.plugins.resourcelist.ResourceList";
-                mojo.resourceListClass.publicVisibility = false;
-                mojo.resourceListClass.outputDirectory = Paths.get(URI.create("memory:/generated"));
+                    testExecute(project, outputDirectory);
 
-                mojo.execute(buildOutputDir);
+                    verify(project).addCompileSourceRoot("/generated");
+                }
 
-                String resourceList = MemoryFileSystemProvider.getContentAsString(mojo.resourceListFile);
-                assertEquals("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties\n", resourceList);
+                @ParameterizedTest
+                @CsvSource({
+                        "false, false",
+                        "true,  false",
+                        "true,  true"
+                })
+                void testSourceRootAlready(boolean addedAsAbsolute, boolean providedAsAbsolute)
+                        throws MojoExecutionException, MojoFailureException, IOException {
 
-                ArgumentCaptor<Resource> resourceCaptor = ArgumentCaptor.forClass(Resource.class);
-                verify(mojo.project).addResource(resourceCaptor.capture());
+                    MavenProject project = mock(MavenProject.class);
+                    when(project.getCompileSourceRoots()).thenReturn(addedAsAbsolute
+                            ? List.of("/generated")
+                            : List.of("generated"));
 
-                Resource resource = resourceCaptor.getValue();
-                assertEquals("/project/target/classes", resource.getDirectory());
-                assertEquals(List.of("resources"), resource.getIncludes());
-                assertEquals(List.of(), resource.getExcludes());
-                assertEquals("", resource.getTargetPath());
+                    Path outputDirectory = Paths.get(URI.create("memory:generated"));
+                    if (providedAsAbsolute) {
+                        outputDirectory = outputDirectory.toAbsolutePath();
+                    }
 
-                Path resourceListClassFile = mojo.resourceListClass.outputDirectory
-                        .resolve("com/github/robtimus/maven/plugins/resourcelist/ResourceList.java");
+                    testExecute(project, outputDirectory);
 
-                assertTrue(Files.exists(resourceListClassFile));
+                    verify(project, never()).addCompileSourceRoot(any());
+                }
+
+                @Test
+                void testSourceRootAlreadyAddedAsRelative() throws MojoExecutionException, MojoFailureException, IOException {
+                    MavenProject project = mock(MavenProject.class);
+                    when(project.getCompileSourceRoots()).thenReturn(List.of("generated"));
+
+                    testExecute(project, Paths.get(URI.create("memory:generated")));
+
+                    verify(project, never()).addCompileSourceRoot(any());
+                }
+
+                void testExecute(MavenProject project, Path outputDirectory) throws MojoExecutionException, MojoFailureException, IOException {
+                    ListResourcesMojo mojo = new ListResourcesMojo();
+                    mojo.project = project;
+                    mojo.includes = new String[] { "**/*.properties" };
+                    mojo.setLog(mock(Log.class));
+
+                    mojo.resourceListFile = Paths.get(URI.create("memory:/project/target/classes/resources"));
+                    mojo.resourceBaseDir = Paths.get("src/main/resources");
+                    Path buildOutputDir = Paths.get(URI.create("memory:/project/target/classes"));
+
+                    mojo.resourceListClass = new ResourceListClass();
+                    mojo.resourceListClass.className = "com.github.robtimus.maven.plugins.resourcelist.ResourceList";
+                    mojo.resourceListClass.publicVisibility = false;
+                    mojo.resourceListClass.outputDirectory = outputDirectory;
+
+                    mojo.execute(buildOutputDir);
+
+                    String resourceList = MemoryFileSystemProvider.getContentAsString(mojo.resourceListFile);
+                    assertEquals("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties\n", resourceList);
+
+                    ArgumentCaptor<Resource> resourceCaptor = ArgumentCaptor.forClass(Resource.class);
+                    verify(mojo.project).addResource(resourceCaptor.capture());
+
+                    Resource resource = resourceCaptor.getValue();
+                    assertEquals("/project/target/classes", resource.getDirectory());
+                    assertEquals(List.of("resources"), resource.getIncludes());
+                    assertEquals(List.of(), resource.getExcludes());
+                    assertEquals("", resource.getTargetPath());
+
+                    Path resourceListClassFile = mojo.resourceListClass.outputDirectory
+                            .resolve("com/github/robtimus/maven/plugins/resourcelist/ResourceList.java");
+
+                    assertTrue(Files.exists(resourceListClassFile));
+                }
             }
 
             @Test

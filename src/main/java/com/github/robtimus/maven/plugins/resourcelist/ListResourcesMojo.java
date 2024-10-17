@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -92,6 +94,16 @@ public class ListResourcesMojo extends AbstractMojo {
      *   <li>{@code void forEach(Consumer<? super String> action)} will run an action for each resource.</li>
      * </ul>
      * <p>
+     * The following nested properties can be set:
+     * <ul>
+     *   <li>{@code className} (required): the fully qualified class name of the accessor class.</li>
+     *   <li>{@code publicVisibility}: {@code true} if classes and methods should have public visibility, or {@code false} (default) if they should
+     *       be package private.</li>
+     *   <li>{@code outputDirectory}: the output directory where the resource list accessor class will be written to, without the package structure.
+     *       This directory will be added as a project source root.
+     *       Defaults to <code>${project.build.outputDirectory}/generated-sources/resource-lists</code>.</li>
+     * </ul>
+     * <p>
      * It's an error to specify the resource list class in combination with a resource list file that is not located in the project build's output
      * directory (usually {@code target/classes}).
      *
@@ -136,7 +148,7 @@ public class ListResourcesMojo extends AbstractMojo {
         scanner.excludeFile(resourceListFile);
         Set<String> resources = scanner.scan(resourceBaseDir);
 
-        log.debug(Messages.listResources.writingListFile(resourceListFile));
+        log.info(Messages.listResources.writingListFile(resourceListFile));
         writeResources(resources);
 
         Resource resourceListResource = resourceListResource(buildOutputDir);
@@ -149,8 +161,15 @@ public class ListResourcesMojo extends AbstractMojo {
             if (resourceListResource == null) {
                 throw new MojoFailureException(Messages.listResources.resourceListClassForNonResource());
             }
+            if (resourceListClass.outputDirectory == null) {
+                resourceListClass.setDefaultOutputDirectory(project);
+                log.debug(Messages.listResources.setDefaultResourceListClassOutputDirectory(resourceListClass.outputDirectory));
+            }
             ResourceListClassGenerator generator = new ResourceListClassGenerator();
             generator.generateClassFile(resourceListClass, resourceListResource);
+
+            addSourceRoot(project.getCompileSourceRoots(), project::addCompileSourceRoot, resourceListClass.outputDirectory);
+            log.debug(Messages.listResources.addedResourceListClassOutputDirectory(resourceListClass.outputDirectory));
         }
     }
 
@@ -184,5 +203,14 @@ public class ListResourcesMojo extends AbstractMojo {
             return result;
         }
         return null;
+    }
+
+    private void addSourceRoot(List<String> sourceRoots, Consumer<String> sourceRootAdder, Path sourceRoot) {
+        String newSourcePath = sourceRoot.toString();
+        String newAbsoluteSourcePath = sourceRoot.toAbsolutePath().normalize().toString();
+
+        if (!sourceRoots.contains(newSourcePath) && !sourceRoots.contains(newAbsoluteSourcePath)) {
+            sourceRootAdder.accept(newAbsoluteSourcePath);
+        }
     }
 }

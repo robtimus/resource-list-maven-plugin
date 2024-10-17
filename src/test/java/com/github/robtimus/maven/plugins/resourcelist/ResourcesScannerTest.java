@@ -130,6 +130,20 @@ class ResourcesScannerTest {
         }
 
         @Test
+        void testClassFilesAreExcluded() throws MojoExecutionException {
+            Log log = mock(Log.class);
+            ResourcesScanner scanner = new ResourcesScanner(null, null, true, log);
+            Path baseDir = Paths.get("target/classes");
+
+            Set<String> resources = scanner.scan(baseDir);
+
+            assertThat(resources, contains(
+                    "com/github/robtimus/maven/plugins/resourcelist/ResourceListClass.java.template",
+                    "com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"
+            ));
+        }
+
+        @Test
         void testIOException() {
             Log log = mock(Log.class);
             ResourcesScanner scanner = new ResourcesScanner(null, null, true, log);
