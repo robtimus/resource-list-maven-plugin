@@ -30,7 +30,7 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
-  <name>resource-list-maven-plugin</name>
+  <name>Resource List Maven Plugin</name>
   <description>A Maven plugin that can create lists of resources</description>
   <url>https://robtimus.github.io/resource-list-maven-plugin/</url>
   <inceptionYear>2024</inceptionYear>

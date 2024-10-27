@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 
-<project name="resource-list-maven-plugin"
+<project name="Resource List Maven Plugin"
   xmlns="http://maven.apache.org/DECORATION/1.8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 https://maven.apache.org/xsd/decoration-1.8.0.xsd">
 
@@ -23,6 +23,7 @@
     <menu name="resource-list-maven-plugin">
       <item name="Overview" href="index.html" />
       <item name="Goals" href="plugin-info.html" />
+      <item name="Usage" href="usage.html" />
       <item name="Releases" href="https://github.com/robtimus/resource-list-maven-plugin/releases" />
     </menu>
   </body>

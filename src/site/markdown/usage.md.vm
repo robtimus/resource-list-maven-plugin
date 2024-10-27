@@ -1,0 +1,108 @@
+#set ($h = "#")
+<head>
+  <title>Usage</title>
+</head>
+
+$h$h Usage
+
+$h$h$h Generating a resource list
+
+```xml
+<project>
+  ...
+  <build>
+    <plugins>
+      ...
+      <plugin>
+        <groupId>com.github.robtimus</groupId>
+        <artifactId>resource-list-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>list-resources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      ...
+    </plugins>
+  </build>
+  ...
+</project>
+```
+
+This snippet will generate file `META-INF/\${project.artifactId}.resources` in the build's output directory (usually `target/classes`). This file will contain one resource per line.
+
+$h$h$h$h Custom locations
+
+Add element `<resourceListFile>...</resourceListFile>` to the plugin's configuration to specify a different name or location. To let the file be available as resource in your project's build make sure to put the file inside `\${project.build.outputDirectory}`.
+
+```xml
+<resourceListFile>\${project.build.outputDirectory}/META-INF/my-resource-list</resourceListFile>
+```
+
+Add element `<resourceBaseDir>...</resourceBaseDir>` to the plugin's configuration to specify a different base directory to scan for resources.
+Note that if the value is not `\${project.build.outputDirectory}` or a sub directory, the resources in the resource list file may not be available as resources during runtime.
+
+$h$h$h$h Limiting listed resources
+
+By default all resources are included except the following:
+
+* file `META-INF/MANIFEST.MF`
+* files `META-INF/LICENSE.*`
+* files inside `META-INF/services/**`
+* files inside `META-INF/maven/**`
+* files inside `META-INF/m2e/**`
+
+Adding elements `<includes>...</includes>` and `<excludes>...</excludes>` to the plugin's configuration can be used to specify Ant patterns to limit what's included.
+
+```xml
+<!-- include only resources in a specific folder, but exclude properties files -->
+<includes>
+  <include>com/foo/bar/**</include>
+</includes>
+<excludes>
+  <exclude>**/*.properties</exclude>
+</excludes>
+```
+
+$h$h$h$h Accessing the resource list
+
+If the resource list file is placed inside the build's output directory it can be accessed by code in the project using default resource loading methods like `Class.getResource` and `Class.getResourceAsStream`.
+If the resource base directory is `\${project.build.outputDirectory}` (the default value), each line in the resource can again be accessed using default resource loading methods.
+
+It's possible to generate a class to access the resources in the resource list by including the following in the plugin's configuration:
+
+```xml
+<resourceListClass>
+  <className>com.foo.bar.ResourceList</className>
+</resourceListClass>
+```
+
+This will create package-private class `com.foo.bar.ResourceList` with the following methods:
+
+* `static ResourceList absolute()` will return an instance of the class that returns absolute paths to the resources. These paths can be used with methods like `Class.getResource`.
+* `static ResourceList relative()` will return an instance of the class that returns paths to the resources relative to the root folder. These paths can be used with methods like `ClassLoader.getResource`.
+* `Stream<String> stream()` will return a stream over the resources. This stream should be closed after use.
+* `List<String> list()` will return a list containing the resources.
+* `void forEach(Consumer<? super String> action)` will run an action for each resource.
+
+For instance, to get a list of resource URLs:
+
+```java
+try (Stream<String> stream = ResourceList.absolute().stream()) {
+    List<URL> resources = stream.map(getClass()::getResource).collect(Collectors.toList());
+}
+```
+
+To make the resource list class and its methods public, set the nested `publicVisibility` element to `true`:
+
+```xml
+<resourceListClass>
+  <className>com.foo.bar.ResourceList</className>
+  <publicVisibility>true</true>
+</resourceListClass>
+```
+
+The `list-resources` goal of the Resource List Maven Plugin is bound to the `process-resources` phase in the build lifecycle. Since this comes before the `compile` phase, generated accessor classes are available at compile time.
