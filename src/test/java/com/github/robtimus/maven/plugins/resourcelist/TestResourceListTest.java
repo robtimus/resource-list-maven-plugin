@@ -25,33 +25,67 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("nls")
 class TestResourceListTest {
 
-    @Test
-    void testStream() {
-        try (Stream<String> resources = TestResourceList.stream()) {
-            List<String> result = resources.collect(Collectors.toList());
-            assertEquals(List.of("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"), result);
+    @Nested
+    class Absolute {
+
+        @Test
+        void testStream() {
+            try (Stream<String> resources = TestResourceList.absolute().stream()) {
+                List<String> result = resources.collect(Collectors.toList());
+                assertEquals(List.of("/com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"), result);
+            }
+        }
+
+        @Test
+        void testList() {
+            List<String> resources = TestResourceList.absolute().list();
+            assertEquals(List.of("/com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"), resources);
+        }
+
+        @Test
+        void testForEach() {
+            @SuppressWarnings("unchecked")
+            Consumer<String> action = mock(Consumer.class);
+
+            TestResourceList.absolute().forEach(action);
+
+            verify(action).accept("/com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties");
+            verifyNoMoreInteractions(action);
         }
     }
 
-    @Test
-    void testList() {
-        List<String> resources = TestResourceList.list();
-        assertEquals(List.of("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"), resources);
-    }
+    @Nested
+    class Relative {
 
-    @Test
-    void testForEach() {
-        @SuppressWarnings("unchecked")
-        Consumer<String> action = mock(Consumer.class);
+        @Test
+        void testStream() {
+            try (Stream<String> resources = TestResourceList.relative().stream()) {
+                List<String> result = resources.collect(Collectors.toList());
+                assertEquals(List.of("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"), result);
+            }
+        }
 
-        TestResourceList.forEach(action);
+        @Test
+        void testList() {
+            List<String> resources = TestResourceList.relative().list();
+            assertEquals(List.of("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties"), resources);
+        }
 
-        verify(action).accept("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties");
-        verifyNoMoreInteractions(action);
+        @Test
+        void testForEach() {
+            @SuppressWarnings("unchecked")
+            Consumer<String> action = mock(Consumer.class);
+
+            TestResourceList.relative().forEach(action);
+
+            verify(action).accept("com/github/robtimus/maven/plugins/resourcelist/resource-list-maven-plugin.properties");
+            verifyNoMoreInteractions(action);
+        }
     }
 }

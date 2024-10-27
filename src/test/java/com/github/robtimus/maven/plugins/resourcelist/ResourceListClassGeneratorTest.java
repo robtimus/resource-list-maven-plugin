@@ -19,13 +19,19 @@ package com.github.robtimus.maven.plugins.resourcelist;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayWithSize;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -40,7 +46,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaCompiler.CompilationTask;
@@ -221,45 +232,89 @@ class ResourceListClassGeneratorTest {
                 }
             }
 
-            private void validateGeneratedClass(boolean publicVisibility, String resource) throws IOException, ReflectiveOperationException {
+            private void validateGeneratedClass(boolean publicVisibility, String expectedResource) throws IOException, ReflectiveOperationException {
                 URL[] urls = { baseDir.toUri().toURL() };
                 try (URLClassLoader classLoader = new URLClassLoader(urls)) {
                     Class<?> resourceListClass = Class.forName("test.ResourceList", true, classLoader);
 
+                    MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(resourceListClass, MethodHandles.lookup());
+
                     assertVisibility(resourceListClass.getModifiers(), publicVisibility);
 
-                    Constructor<?>[] constructors = resourceListClass.getDeclaredConstructors();
-                    assertThat(constructors, arrayWithSize(1));
-                    assertEquals(0, constructors[0].getParameterCount());
-                    assertTrue(Modifier.isPrivate(constructors[0].getModifiers()));
+                    validateConstructors(resourceListClass);
 
-                    Field[] fields = resourceListClass.getDeclaredFields();
-                    assertThat(fields, arrayWithSize(1));
+                    validateFields(resourceListClass, expectedResource, lookup);
 
-                    Field resourceField = resourceListClass.getDeclaredField("RESOURCE_LIST_RESOURCE");
-                    assertTrue(Modifier.isPrivate(resourceField.getModifiers()));
-                    assertTrue(Modifier.isStatic(resourceField.getModifiers()));
-                    assertTrue(Modifier.isFinal(resourceField.getModifiers()));
-                    resourceField.setAccessible(true);
-                    assertEquals(resource, resourceField.get(null));
-
-                    long nonPrivateMethodCount = Arrays.stream(resourceListClass.getDeclaredMethods())
-                            .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                            .count();
-                    assertEquals(3, nonPrivateMethodCount);
-
-                    Method streamMethod = resourceListClass.getDeclaredMethod("stream");
-                    assertVisibility(streamMethod.getModifiers(), publicVisibility);
-                    assertEquals(Stream.class, streamMethod.getReturnType());
-
-                    Method listMethod = resourceListClass.getDeclaredMethod("list");
-                    assertVisibility(listMethod.getModifiers(), publicVisibility);
-                    assertEquals(List.class, listMethod.getReturnType());
-
-                    Method forEachMethod = resourceListClass.getDeclaredMethod("forEach", Consumer.class);
-                    assertVisibility(forEachMethod.getModifiers(), publicVisibility);
-                    assertEquals(void.class, forEachMethod.getReturnType());
+                    validateMethods(resourceListClass, publicVisibility, lookup);
                 }
+            }
+
+            private void validateConstructors(Class<?> resourceListClass) {
+                Constructor<?>[] constructors = resourceListClass.getDeclaredConstructors();
+                assertThat(constructors, arrayWithSize(1));
+                assertArrayEquals(new Class[] { UnaryOperator.class }, constructors[0].getParameterTypes());
+                assertTrue(Modifier.isPrivate(constructors[0].getModifiers()));
+            }
+
+            private void validateFields(Class<?> resourceListClass, String expectedResource, MethodHandles.Lookup lookup) {
+                Map<String, Field> fields = Arrays.stream(resourceListClass.getDeclaredFields())
+                        .filter(field -> !field.isSynthetic())
+                        .collect(Collectors.toMap(Field::getName, Function.identity()));
+
+                assertEquals(Set.of("RESOURCE_LIST_RESOURCE", "ABSOLUTE", "RELATIVE", "resourceModifier"), fields.keySet());
+
+                fields.values().forEach(field -> {
+                    assertTrue(Modifier.isPrivate(field.getModifiers()));
+                    assertNotEquals("resourceModifier".equals(field.getName()), Modifier.isStatic(field.getModifiers()));
+                    assertTrue(Modifier.isFinal(field.getModifiers()));
+                });
+
+                String actualResource = (String) assertDoesNotThrow(() -> lookup
+                        .findStaticVarHandle(resourceListClass, "RESOURCE_LIST_RESOURCE", String.class))
+                        .get();
+
+                assertEquals(expectedResource, actualResource);
+            }
+
+            private void validateMethods(Class<?> resourceListClass, boolean publicVisibility, MethodHandles.Lookup lookup) {
+                Map<String, Method> methods = Arrays.stream(resourceListClass.getDeclaredMethods())
+                        .filter(method -> !method.isSynthetic())
+                        .collect(Collectors.toMap(Method::getName, Function.identity()));
+
+                assertEquals(Set.of("absolute", "relative", "stream", "list", "forEach", "reader"), methods.keySet());
+
+                validateFactoryMethod(methods.get("absolute"), "ABSOLUTE", publicVisibility, resourceListClass, lookup);
+                validateFactoryMethod(methods.get("relative"), "RELATIVE", publicVisibility, resourceListClass, lookup);
+
+                validateAccessorMethod(methods.get("stream"), Stream.class, List.of(), publicVisibility);
+                validateAccessorMethod(methods.get("list"), List.class, List.of(), publicVisibility);
+                validateAccessorMethod(methods.get("forEach"), void.class, List.of(Consumer.class), publicVisibility);
+            }
+
+            private void validateFactoryMethod(Method method, String matchingField, boolean publicVisibility, Class<?> resourceListClass,
+                    MethodHandles.Lookup lookup) {
+
+                assertTrue(Modifier.isStatic(method.getModifiers()));
+                assertVisibility(method.getModifiers(), publicVisibility);
+
+                Object fieldValue = assertDoesNotThrow(() -> lookup
+                        .findStaticVarHandle(resourceListClass, matchingField, resourceListClass))
+                        .get();
+
+                Object methodReturnValue = assertDoesNotThrow(() -> lookup
+                        .findStatic(resourceListClass, method.getName(), MethodType.methodType(resourceListClass))
+                        .invoke());
+
+                assertSame(fieldValue, methodReturnValue);
+            }
+
+            private void validateAccessorMethod(Method method, Class<?> returnType, List<Class<?>> parameterTypes, boolean publicVisibility) {
+
+                assertFalse(Modifier.isStatic(method.getModifiers()));
+                assertVisibility(method.getModifiers(), publicVisibility);
+
+                assertEquals(returnType, method.getReturnType());
+                assertEquals(parameterTypes, Arrays.asList(method.getParameterTypes()));
             }
 
             private void assertVisibility(int modifiers, boolean publicVisibility) {

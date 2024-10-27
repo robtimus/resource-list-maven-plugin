@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Generated;
@@ -36,39 +37,59 @@ final class TestResourceList {
 
     private static final String RESOURCE_LIST_RESOURCE = "/resource-list-maven-plugin.test-resources";
 
-    private TestResourceList() {
+    private static final TestResourceList ABSOLUTE = new TestResourceList(s -> "/" + s); //$NON-NLS-1$
+    private static final TestResourceList RELATIVE = new TestResourceList(UnaryOperator.identity());
+
+    private final UnaryOperator<String> resourceModifier;
+
+    private TestResourceList(UnaryOperator<String> resourceModifier) {
+        this.resourceModifier = resourceModifier;
     }
 
-    static Stream<String> stream() {
+    static TestResourceList absolute() {
+        return ABSOLUTE;
+    }
+
+    static TestResourceList relative() {
+        return RELATIVE;
+    }
+
+    Stream<String> stream() {
         BufferedReader reader = reader();
-        return reader.lines().onClose(() -> {
-            try {
-                reader.close();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
+        return reader.lines()
+                .onClose(() -> {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .map(resourceModifier);
     }
 
-    static List<String> list() {
+    List<String> list() {
         try (BufferedReader reader = reader()) {
-            return reader.lines().collect(Collectors.toList());
+            return reader.lines()
+                    .map(resourceModifier)
+                    .collect(Collectors.toList());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    static void forEach(Consumer<? super String> action) {
+    void forEach(Consumer<? super String> action) {
         Objects.requireNonNull(action);
         try (BufferedReader reader = reader()) {
-            reader.lines().forEach(action);
+            reader.lines()
+                    .map(resourceModifier)
+                    .forEach(action);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private static BufferedReader reader() {
-        InputStream inputStream = TestResourceList.class.getResourceAsStream(RESOURCE_LIST_RESOURCE);
+    private BufferedReader reader() {
+        InputStream inputStream = getClass().getResourceAsStream(RESOURCE_LIST_RESOURCE);
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         return new BufferedReader(inputStreamReader);
     }

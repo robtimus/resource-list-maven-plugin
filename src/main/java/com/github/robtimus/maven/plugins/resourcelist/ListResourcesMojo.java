@@ -87,7 +87,15 @@ public class ListResourcesMojo extends AbstractMojo {
 
     /**
      * If given a class will be generated that can be used to access the resource list.
-     * This class will have three static methods:
+     * This class will have two static methods:
+     * <ul>
+     *   <li>{@code absolute()} will return an instance of the class that returns absolute paths to the resources.
+     *       These paths can be used with methods like `Class.getResource`.</li>
+     *   <li>{@code relative()} will return an instance of the class that returns paths to the resources relative to the root folder.
+     *       These paths can be used with methods like `ClassLoader.getResource`.</li>
+     * </ul>
+     * <p>
+     * This class will also have three non-static methods:
      * <ul>
      *   <li>{@code Stream<String> stream()} will return a stream over the resources. This stream should be closed after use.</li>
      *   <li>{@code List<String> list()} will return a list containing the resources.</li>
