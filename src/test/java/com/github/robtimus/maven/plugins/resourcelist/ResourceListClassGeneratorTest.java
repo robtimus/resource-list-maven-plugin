@@ -99,7 +99,7 @@ class ResourceListClassGeneratorTest {
 
             String content = MemoryFileSystemProvider.getContentAsString(classFile);
 
-            String expectedContent = Files.readString(Paths.get("src/test/java/com/github/robtimus/maven/plugins/resourceList/TestResourceList.java"))
+            String expectedContent = Files.readString(Paths.get("src/test/java/com/github/robtimus/maven/plugins/resourcelist/TestResourceList.java"))
                     .replaceAll("\\Q@SuppressWarnings({ \"nls\", \"resource\" })\\E\r?\n", "")
                     .replaceAll("(?s).*\npackage", "package");
 
