@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"com.github.robtimus.maven.plugins.resourcelist","l":"ListResourcesMojo"},{"p":"com.github.robtimus.maven.plugins.resourcelist","l":"ResourceListClass"}]
