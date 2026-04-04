@@ -101,7 +101,7 @@ class ResourceListClassGeneratorTest {
 
             String expectedContent = Files.readString(Paths.get("src/test/java/com/github/robtimus/maven/plugins/resourcelist/TestResourceList.java"))
                     .replaceAll("\\Q@SuppressWarnings({ \"nls\", \"resource\" })\\E\r?\n", "")
-                    .replaceAll("(?s).*\npackage", "package");
+                    .replaceAll("(?s).*\n// This file has been generated", "// This file has been generated");
 
             assertEquals(expectedContent, content);
         }

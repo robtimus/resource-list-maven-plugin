@@ -64,9 +64,9 @@
   <properties>
     <version.java>11</version.java>
 
-    <version.junit-support>3.1</version.junit-support>
-    <version.maven>3.9.5</version.maven>
-    <version.maven-annotations>3.9.0</version.maven-annotations>
+    <version.junit-support>3.2</version.junit-support>
+    <version.maven>3.9.8</version.maven>
+    <version.maven-annotations>3.13.1</version.maven-annotations>
     <version.memory-fs>2.1</version.memory-fs>
     <version.pioneer>2.3.0</version.pioneer>
     <version.plexus-utils>3.6.1</version.plexus-utils>
