@@ -337,7 +337,7 @@
       <id>maven-4</id>
 
       <properties>
-        <version.maven>4.0.0-alpha-4</version.maven>
+        <version.maven>4.0.0-rc-6</version.maven>
       </properties>
     </profile>
   </profiles>
